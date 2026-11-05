@@ -1,26 +1,152 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0b;
+  --surface: #131315;
+  --surface-2: #1b1b1e;
+  --foreground: #f4f4f5;
+  --muted: #a1a1aa;
+  --brand: #e3141c;
+  --brand-hot: #ff2d2d;
+  --brand-deep: #7a0a0e;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-hot: var(--brand-hot);
+  --color-brand-deep: var(--brand-deep);
+  --font-sans: var(--font-barlow), system-ui, sans-serif;
+  --font-display: var(--font-barlow-condensed), var(--font-barlow), sans-serif;
+  --font-script: var(--font-kaushan), cursive;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--brand);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-hot);
+  outline-offset: 3px;
+}
+
+/* ---------- Brand helpers ---------- */
+
+/* Chrome lettering, as in the Benettiz logo */
+.text-chrome {
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #d9d9de 30%,
+    #8b8b93 48%,
+    #f2f2f4 52%,
+    #b5b5bc 72%,
+    #6b6b73 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.35);
+  filter: drop-shadow(0 2px 0 #3a0306) drop-shadow(0 0 18px rgba(227, 20, 28, 0.35));
+}
+
+.text-script-brand {
+  color: var(--brand);
+  -webkit-text-stroke: 1.5px #1a0204;
+  paint-order: stroke fill;
+  filter: drop-shadow(0 3px 0 #1a0204) drop-shadow(0 0 14px rgba(255, 45, 45, 0.45));
+}
+
+/* Carbon fibre weave */
+.bg-carbon {
+  background-color: #0c0c0d;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,0.45) 0 2px, transparent 2px 6px);
+}
+
+/* Neon frame used by cards and buttons */
+.neon-ring {
+  box-shadow:
+    0 0 0 1px rgba(227, 20, 28, 0.55),
+    0 0 18px -2px rgba(227, 20, 28, 0.45),
+    inset 0 0 22px -10px rgba(255, 45, 45, 0.5);
+}
+.neon-ring-strong {
+  box-shadow:
+    0 0 0 1px rgba(255, 45, 45, 0.9),
+    0 0 28px 0 rgba(255, 45, 45, 0.6),
+    inset 0 0 26px -8px rgba(255, 45, 45, 0.6);
+}
+
+/* Edge fades for tickers */
+.mask-x {
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.mask-y {
+  mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
+}
+
+/* ---------- Ambient motion ---------- */
+@keyframes ember {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate3d(var(--drift, 20px), -110vh, 0) scale(0.4); opacity: 0; }
+}
+.ember {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 9999px;
+  background: #ff5a2a;
+  box-shadow: 0 0 8px 2px rgba(255, 70, 30, 0.8);
+  animation: ember linear infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes marquee-x {
+  from { transform: translate3d(-50%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes marquee-y-down {
+  from { transform: translate3d(0, -50%, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes marquee-y-up {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, -50%, 0); }
+}
+.animate-marquee-right { animation: marquee-x 38s linear infinite; }
+.animate-marquee-down { animation: marquee-y-down 26s linear infinite; }
+.animate-marquee-up { animation: marquee-y-up 30s linear infinite; }
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  45% { opacity: 0.86; }
+  48% { opacity: 1; }
+  70% { opacity: 0.93; }
+}
+.animate-flicker { animation: flicker 4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .ember,
+  .animate-marquee-right,
+  .animate-marquee-down,
+  .animate-marquee-up,
+  .animate-flicker { animation: none !important; }
+  .ember { display: none; }
 }

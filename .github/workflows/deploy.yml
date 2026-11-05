@@ -1,0 +1,65 @@
+name: Verifica e faz deploy
+
+# Fluxo: trabalho na branch `dev` -> merge/push na `main` -> deploy automático em
+# https://benettiz.vinnisantos.com.br
+#
+# O build da imagem roda no runner ARM do GitHub (nunca na VPS, que é pequena e
+# compartilhada). A chave DEPLOY_SSH_KEY só consegue executar
+# /usr/local/bin/deploy-benettiz na VPS (restrict + command=).
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx next typegen
+      - run: npx tsc --noEmit
+      - run: npx eslint src
+      - run: npm run build
+
+  deploy:
+    name: Deploy na Oracle (VPS ARM)
+    needs: verify
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04-arm
+    concurrency:
+      group: deploy-benettiz
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build da imagem ARM
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/arm64
+          tags: benettiz-site:latest
+          outputs: type=docker,dest=/tmp/image.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Envia para a VPS e sobe
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          gzip -c /tmp/image.tar | ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes ubuntu@146.235.38.173
+      - name: Verificar site
+        run: curl -fsS -o /dev/null --retry 5 --retry-delay 3 https://benettiz.vinnisantos.com.br/
